@@ -216,30 +216,30 @@ public class DishesInfosActivity extends Activity implements View.OnClickListene
                 break;
             case R.id.dishesinfos_iv_unlike:
                 //不喜欢
-                boolean notlike = SharedPreferencesUtils.getBoolean(getApplicationContext(), Constants.UNLIKE, true);
-                if (notlike) {
-                    SharedPreferencesUtils.saveBoolean(getApplicationContext(), Constants.UNLIKE, false);
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            final String result = Http_support.support(Integer.parseInt(menuid1), "no");
-                            Log.e("----------", "onClick: " + result);
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (result.equals("ok")) {
-                                        mUnlike.setBackgroundResource(R.drawable.like);
-                                        mLike.setBackgroundResource(R.drawable.notlike);
-                                    }
-                                }
-                            });
-                        }
-                    }.start();
-                } else {
-                    SharedPreferencesUtils.saveBoolean(getApplicationContext(), Constants.UNLIKE, true);
-                    mLike.setBackgroundResource(R.drawable.notlike);
-                    mUnlike.setBackgroundResource(R.drawable.notlike);
-                }
+//                boolean notlike = SharedPreferencesUtils.getBoolean(getApplicationContext(), Constants.UNLIKE, true);
+//                if (notlike) {
+//                    SharedPreferencesUtils.saveBoolean(getApplicationContext(), Constants.UNLIKE, false);
+//                    new Thread() {
+//                        @Override
+//                        public void run() {
+//                            final String result = Http_support.support(Integer.parseInt(menuid1), "no");
+//                            Log.e("----------", "onClick: " + result);
+//                            runOnUiThread(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    if (result.equals("ok")) {
+//                                        mUnlike.setBackgroundResource(R.drawable.like);
+//                                        mLike.setBackgroundResource(R.drawable.notlike);
+//                                    }
+//                                }
+//                            });
+//                        }
+//                    }.start();
+//                } else {
+//                    SharedPreferencesUtils.saveBoolean(getApplicationContext(), Constants.UNLIKE, true);
+//                    mLike.setBackgroundResource(R.drawable.notlike);
+//                    mUnlike.setBackgroundResource(R.drawable.notlike);
+//                }
                 break;
             case R.id.dishesinfos_iv_collect://收藏
                 //判此菜品是否收藏

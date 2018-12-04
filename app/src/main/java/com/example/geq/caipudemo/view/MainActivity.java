@@ -107,26 +107,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initListener() {
-        if (netWorkAvailable){
+
         if (gv_class != null) {
             gv_class.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    //将id和分类名称传入到下一个页面
-                    Intent intent = new Intent(MainActivity.this, ClassNameListActivity.class);
-                    if (vegetableinfoList != null) {
-                        Log.i(TAG, "集合:" + vegetableinfoList.toString());
-                        String typeid = vegetableinfoList.get(position).getTypeid();
-                        String typename = vegetableinfoList.get(position).getTypename();
-                        intent.putExtra("typeid", typeid);
-                        intent.putExtra("typename", typename);
+                    if (netWorkAvailable){
+                        //将id和分类名称传入到下一个页面
+                        Intent intent = new Intent(MainActivity.this, ClassNameListActivity.class);
+                        if (vegetableinfoList != null) {
+                            Log.i(TAG, "集合:" + vegetableinfoList.toString());
+                            String typeid = vegetableinfoList.get(position).getTypeid();
+                            String typename = vegetableinfoList.get(position).getTypename();
+                            intent.putExtra("typeid", typeid);
+                            intent.putExtra("typename", typename);
+                        }
+                        startActivityForResult(intent, 1);
+                    }else{
+                        Toast.makeText(MainActivity.this, "亲，您的网络没有连接哦", Toast.LENGTH_SHORT).show();
                     }
-                    startActivityForResult(intent, 1);
+
                 }
             });
-        }
-        }else{
-            Toast.makeText(this, "亲，您的网络没有连接哦", Toast.LENGTH_SHORT).show();
         }
     }
 
