@@ -1,10 +1,13 @@
 package com.example.geq.caipudemo.view;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -62,7 +65,6 @@ public class ClassNameListActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_class);
-
         initUI();
 
         boolean netWorkAvailable = InternetUtils.isNetWorkAvailable(this);
@@ -98,7 +100,7 @@ public class ClassNameListActivity extends AppCompatActivity {
                     Intent intent = new Intent(getApplicationContext(), DishesInfosActivity.class);
                     if (getmenus != null) {
                         intent.putExtra("menuid", getmenus.get(position).getMenuid());
-                        Log.e(TAG, "onClick: ========9======="+getmenus.get(position).getMenuid() );
+                        Log.e(TAG, "onClick: ========9=======" + getmenus.get(position).getMenuid());
                         intent.putExtra("menuname", getmenus.get(position).getMenuname());
                     }
                     startActivity(intent);
@@ -111,9 +113,12 @@ public class ClassNameListActivity extends AppCompatActivity {
      * 从网络上获取数据，放到数据库中，图片加载到
      */
     private void initData() {
+
         getmenus.clear();
         if (typeid != null) {
             request_menu = new Request_menu(Integer.parseInt(typeid), 1, 8);
+            Log.e(TAG, "initData: " + "获取数据中");
+            progress();
             new Thread() {
                 @Override
                 public void run() {
@@ -148,8 +153,8 @@ public class ClassNameListActivity extends AppCompatActivity {
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            View view;
+        public View getView(final int position, View convertView, ViewGroup parent) {
+            final View view;
             if (convertView == null) {
                 view = View.inflate(ClassNameListActivity.this, R.layout.menu_item, null);
             } else {
@@ -157,35 +162,86 @@ public class ClassNameListActivity extends AppCompatActivity {
             }
 
             if (getmenus == null) {
+                anim(view);
                 return view;
             }
 
-            ImageView iv_logo = (ImageView) view.findViewById(R.id.iv_logo);
-            TextView tv_name = (TextView) view.findViewById(R.id.tv_name);
-            RatingBar rb_pinfen = (RatingBar) view.findViewById(R.id.rb_pinfen);
+            final ImageView iv_logo = (ImageView) view.findViewById(R.id.iv_logo);
+            final TextView tv_name = (TextView) view.findViewById(R.id.tv_name);
+            final RatingBar rb_pinfen = (RatingBar) view.findViewById(R.id.rb_pinfen);
 
-            int likes = Integer.parseInt(getItem(position).getLikes());
-            int notLikes = Integer.parseInt(getItem(position).getNotlikes());
-            int i = (likes + notLikes) / likes;
-            rb_pinfen.setRating(i + 1);
-
-            GetDrawable getDrawable = new GetDrawable();
-            String spic = getItem(position).getSpic();
-            Drawable getdrawable = getDrawable.getdrawable(spic, ClassNameListActivity.this);
-            iv_logo.setImageDrawable(getdrawable);
-
-            String menuname = getItem(position).getMenuname();
-            tv_name.setText(menuname);
-
-            Animation animation = AnimationUtils.loadAnimation(ClassNameListActivity.this, R.anim.loding);
-            view.startAnimation(animation);
+            new Thread() {
+                @Override
+                public void run() {
+                    super.run();
+                    onView(position, view, iv_logo, tv_name, rb_pinfen);
+                }
+            }.start();
             return view;
         }
+
+        /**
+         * 更新UI的方法
+         *
+         * @param position
+         * @param view
+         * @param iv_logo
+         * @param tv_name
+         * @param rb_pinfen
+         */
+        private void onView(int position, final View view, final ImageView iv_logo, final TextView tv_name, final RatingBar rb_pinfen) {
+            final int likes = Integer.parseInt(getItem(position).getLikes());
+            final int notLikes = Integer.parseInt(getItem(position).getNotlikes());
+            final String spic = getItem(position).getSpic();
+            final String menuname = getItem(position).getMenuname();
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    rb_pinfen.setRating((float) ((float) (likes / notLikes * 1.5) - 1.23 - 2));
+                    Bitmap bitmap = GetDrawable.getBitmap(spic, ClassNameListActivity.this);
+                    iv_logo.setImageBitmap(bitmap);
+                    tv_name.setText(menuname);
+                    anim(view);
+                }
+            });
+        }
+    }
+
+    /**
+     * 动画
+     *
+     * @param view 需要显示动画的控件
+     */
+    private void anim(View view) {
+        Animation animation = AnimationUtils.loadAnimation(ClassNameListActivity.this, R.anim.loding);
+        view.startAnimation(animation);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         setResult(1);
+    }
+
+
+    public void progress() {
+        final ProgressDialog dialog = new ProgressDialog(this);
+        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        dialog.setTitle("加载数据....");
+        dialog.setMax(20);
+        dialog.show();
+        new Thread() {
+            public void run() {
+                for (int i = 0; i <= 20; i++) {
+                    dialog.setProgress(i);
+                    SystemClock.sleep(30);
+                }
+                dialog.dismiss();
+            }
+
+            ;
+        }.start();
+
     }
 }

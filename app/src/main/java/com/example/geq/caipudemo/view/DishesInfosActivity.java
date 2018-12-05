@@ -18,6 +18,7 @@ import android.widget.Toast;
 
 import com.example.geq.caipudemo.R;
 import com.example.geq.caipudemo.db.Constants;
+import com.example.geq.caipudemo.db.ImageUtils;
 import com.example.geq.caipudemo.db.InternetUtils;
 import com.example.geq.caipudemo.db.Recipedao;
 import com.example.geq.caipudemo.db.SharedPreferencesUtils;
@@ -52,6 +53,7 @@ public class DishesInfosActivity extends Activity implements View.OnClickListene
     private MyAdpater myAdpater;
     private String spic;
     private boolean flag;
+    private  String menuname;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -121,14 +123,9 @@ public class DishesInfosActivity extends Activity implements View.OnClickListene
         Intent intent = getIntent();
         final String menuid = intent.getStringExtra("menuid");
         Log.e("TAG", "onClick:------------------ " + menuid);
-        String menuName = intent.getStringExtra("menuname");
+       // String menuName = intent.getStringExtra("menuname");
         //收藏按钮初始化图标
         setCollectIcon(menuid);
-//        if (collectIcon){
-//            mCollect.setImageResource(R.drawable.like);
-//        }else{
-//            mCollect.setImageResource(R.drawable.notlike);
-//        }
         if (menuid != null) {
             new Thread() {
                 @Override
@@ -158,13 +155,19 @@ public class DishesInfosActivity extends Activity implements View.OnClickListene
 
     //菜单详情设置
     private void setMenuInfo() {
-        mName.setText(menuDetail.getMenuname());
+
+        menuname = menuDetail.getMenuname();
+        mName.setText(menuname);
 
         spic = menuDetail.getSpic();
         GetDrawable getdrawable = new GetDrawable();
         Drawable drawable = getdrawable.getdrawable(spic, DishesInfosActivity.this);
-        mIcon.setImageDrawable(drawable);
-        mType.setText("www");
+        if (drawable!=null){
+            mIcon.setImageDrawable(drawable);
+            ImageUtils.saveCroppedImage(this,mIcon,drawable);
+        }
+
+        mType.setText("川菜");
         mInfo.setText(menuDetail.getAbstracts());
         mFoods.setText(menuDetail.getMainmaterial());
     }
@@ -182,6 +185,7 @@ public class DishesInfosActivity extends Activity implements View.OnClickListene
                 Log.e(TAG, "onClick: ==============="+menuid );
                 intent.putExtra("spic", spic);
                 intent.putExtra("menuid", menuid);
+                intent.putExtra("menuname", menuname);
                 startActivity(intent);
                 break;
             case R.id.dishesinfos_iv_like:
@@ -216,30 +220,30 @@ public class DishesInfosActivity extends Activity implements View.OnClickListene
                 break;
             case R.id.dishesinfos_iv_unlike:
                 //不喜欢
-//                boolean notlike = SharedPreferencesUtils.getBoolean(getApplicationContext(), Constants.UNLIKE, true);
-//                if (notlike) {
-//                    SharedPreferencesUtils.saveBoolean(getApplicationContext(), Constants.UNLIKE, false);
-//                    new Thread() {
-//                        @Override
-//                        public void run() {
-//                            final String result = Http_support.support(Integer.parseInt(menuid1), "no");
-//                            Log.e("----------", "onClick: " + result);
-//                            runOnUiThread(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    if (result.equals("ok")) {
-//                                        mUnlike.setBackgroundResource(R.drawable.like);
-//                                        mLike.setBackgroundResource(R.drawable.notlike);
-//                                    }
-//                                }
-//                            });
-//                        }
-//                    }.start();
-//                } else {
-//                    SharedPreferencesUtils.saveBoolean(getApplicationContext(), Constants.UNLIKE, true);
-//                    mLike.setBackgroundResource(R.drawable.notlike);
-//                    mUnlike.setBackgroundResource(R.drawable.notlike);
-//                }
+                boolean notlike = SharedPreferencesUtils.getBoolean(getApplicationContext(), Constants.UNLIKE, true);
+                if (notlike) {
+                    SharedPreferencesUtils.saveBoolean(getApplicationContext(), Constants.UNLIKE, false);
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            final String result = Http_support.support(Integer.parseInt(menuid1), "no");
+                            Log.e("----------", "onClick: " + result);
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (result.equals("ok")) {
+                                        mUnlike.setBackgroundResource(R.drawable.like);
+                                        mLike.setBackgroundResource(R.drawable.notlike);
+                                    }
+                                }
+                            });
+                        }
+                    }.start();
+                } else {
+                    SharedPreferencesUtils.saveBoolean(getApplicationContext(), Constants.UNLIKE, true);
+                    mLike.setBackgroundResource(R.drawable.notlike);
+                    mUnlike.setBackgroundResource(R.drawable.notlike);
+                }
                 break;
             case R.id.dishesinfos_iv_collect://收藏
                 //判此菜品是否收藏

@@ -42,6 +42,7 @@ public class CommentPageActivity extends Activity implements View.OnClickListene
     private List<Comment> commentList;
     private boolean flag;
     private Drawable drawable;
+    private String menuname;
     //评论结合
 
 
@@ -70,28 +71,7 @@ public class CommentPageActivity extends Activity implements View.OnClickListene
 
     //长按点击事件
     private void setOnImageLongClickListener() {
-        mIcon.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(CommentPageActivity.this);
-                builder.setTitle("保存图片");
-                builder.setMessage("是否保存？");
-                builder.setPositiveButton("保存", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        ImageUtils.saveCroppedImage(CommentPageActivity.this,drawable);
-                    }
-                });
-                builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        //
-                    }
-                });
-                builder.show();
-                return true;
-            }
-        });
+
     }
 
 
@@ -104,6 +84,9 @@ public class CommentPageActivity extends Activity implements View.OnClickListene
         //图片路径
         final String spic = intent.getStringExtra("spic");
         menuid = intent.getStringExtra("menuid");
+
+        menuname = intent.getStringExtra("menuname");
+        mName.setText(menuname);
         getMenuId();
         if (menuid != null) {
             Log.e("---pl----", "initData: " + menuid);
@@ -116,13 +99,18 @@ public class CommentPageActivity extends Activity implements View.OnClickListene
                     Log.e("---commentList----", "commentList: " + commentList.size());
                     GetDrawable getdrawable = new GetDrawable();
                     drawable = getdrawable.getdrawable(spic, CommentPageActivity.this);
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mIcon.setImageDrawable(drawable);
-                            mListView.setAdapter(new MyAdpater());
-                        }
-                    });
+                    if (commentList!=null){
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (drawable!=null){
+                                    mIcon.setImageDrawable(drawable);
+                                    ImageUtils.saveCroppedImage(CommentPageActivity.this,mIcon,drawable);
+                                }
+                                mListView.setAdapter(new MyAdpater());
+                            }
+                        });
+                    }
                 }
             }.start();
 
@@ -170,6 +158,8 @@ public class CommentPageActivity extends Activity implements View.OnClickListene
                         @Override
                         public void run() {
                             Toast.makeText(CommentPageActivity.this, "评论成功！", Toast.LENGTH_SHORT).show();
+                            commentList.clear();
+                            initData();
                             return;
                         }
                     });

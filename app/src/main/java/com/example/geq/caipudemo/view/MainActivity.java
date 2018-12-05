@@ -3,6 +3,7 @@ package com.example.geq.caipudemo.view;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -21,7 +22,6 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,11 +37,9 @@ import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
-    private ProgressDialog progressDialog = null;
+
     private GridView gv_class;
     private List<Map<String, Object>> mapList = new ArrayList<Map<String, Object>>();
-    private ConnectivityManager connectivityManager;
-    private NetworkInfo activeNetworkInfo;
     private String TAG = "MainActivity";
     private List<Vegetableinfo> vegetableinfoList;
     private boolean netWorkAvailable;
@@ -55,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
                     MyGridViewAdapter myGridViewAdapter = new MyGridViewAdapter();
                     gv_class.setAdapter(myGridViewAdapter);
                     if (vegetableinfoList == null) {
-                        Toast.makeText(MainActivity.this, "获取数据不成功", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "网络异常！", Toast.LENGTH_SHORT).show();
                     }
                     break;
             }
@@ -88,18 +86,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
     /**
      * 从网络中访问数据
      */
     private void initData() {
-        progressDialog = ProgressDialog.show(MainActivity.this, "请稍等...", "获取数据中...", true);
+        progress();
         new Thread() {
             @Override
             public void run() {
                 vegetableinfoList = Http_Vegetable.getVegetable();
                 Message message = Message.obtain();
-                progressDialog.dismiss();
                 message.what = 0;
                 mHandler.sendMessage(message);
             }
@@ -107,12 +103,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initListener() {
-
         if (gv_class != null) {
             gv_class.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    if (netWorkAvailable){
+                    if (netWorkAvailable) {
                         //将id和分类名称传入到下一个页面
                         Intent intent = new Intent(MainActivity.this, ClassNameListActivity.class);
                         if (vegetableinfoList != null) {
@@ -123,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
                             intent.putExtra("typename", typename);
                         }
                         startActivityForResult(intent, 1);
-                    }else{
+                    } else {
                         Toast.makeText(MainActivity.this, "亲，您的网络没有连接哦", Toast.LENGTH_SHORT).show();
                     }
 
@@ -182,27 +177,40 @@ public class MainActivity extends AppCompatActivity {
             ImageView iv_logo = (ImageView) view.findViewById(R.id.iv_logo);
             if (vegetableinfoList == null) {
                 //从数据库中获取数据来显示页面
-                Animation animation = AnimationUtils.loadAnimation(MainActivity.this, R.anim.loding);
-                view.startAnimation(animation);
+                anim(view);
                 return view;
             }
-            insertData(position);
-
-            String typename = getItem(position).getTypename();
-            tv_des.setText(typename);
-
-            String typepic = getItem(position).getTypepic();
-            GetDrawable GetDrawable = new GetDrawable();
-            Drawable logo = GetDrawable.getdrawable(typepic, MainActivity.this);
-            if (logo != null) {
-                iv_logo.setImageDrawable(logo);
-            } else {
-                iv_logo.setImageResource(R.drawable.image_haha);
-            }
-            Animation animation = AnimationUtils.loadAnimation(MainActivity.this, R.anim.loding);
-            view.startAnimation(animation);
+            onView(position, view, tv_des, iv_logo);
 
             return view;
+        }
+
+        private void onView(final int position, final View view, final TextView tv_des, final ImageView iv_logo) {
+
+            new Thread() {
+                @Override
+                public void run() {
+                    super.run();
+                    insertData(position);
+                    final String typename = getItem(position).getTypename();
+                    final String typepic = getItem(position).getTypepic();
+
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            tv_des.setText(typename);
+                            Bitmap logo = GetDrawable.getBitmap(typepic, MainActivity.this);
+                            if (logo != null) {
+                                iv_logo.setImageBitmap(logo);
+                            } else {
+                                iv_logo.setImageResource(R.drawable.image_haha);
+                            }
+                            anim(view);
+                        }
+                    });
+                }
+            }.start();
         }
 
         private boolean insertData(int position) {
@@ -213,6 +221,11 @@ public class MainActivity extends AppCompatActivity {
             }
             return false;
         }
+    }
+
+    private void anim(View view) {
+        Animation animation = AnimationUtils.loadAnimation(MainActivity.this, R.anim.loding);
+        view.startAnimation(animation);
     }
 
     /**
@@ -227,5 +240,27 @@ public class MainActivity extends AppCompatActivity {
             List<Vegetableinfo> vegetableinfos = recipedao.select_types();
             return vegetableinfos;
         }
+    }
+
+
+    //进度条
+    public void progress() {
+        final ProgressDialog dialog = new ProgressDialog(this);
+        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        dialog.setTitle("加载数据....");
+        dialog.setMax(20);
+        dialog.show();
+        new Thread() {
+            public void run() {
+                for (int i = 0; i <= 30; i++) {
+                    dialog.setProgress(i);
+                    SystemClock.sleep(30);
+                }
+                dialog.dismiss();
+            }
+
+            ;
+        }.start();
+
     }
 }
